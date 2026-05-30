@@ -363,7 +363,7 @@ async function renderList() {
     </div>
     <div class="report-list" id="companyList">${skeletonHTML()}</div>`;
   try {
-    const { dirs } = await fetchDirItems('report/request');
+    const { dirs } = await fetchDirItems('report/company');
     _companies = dirs;
     renderCompanyCards('');
   } catch {
@@ -378,7 +378,7 @@ async function renderCompanyList(company) {
   const back = `<span class="back-link" onclick="navigate()">← 기업 목록</span>`;
   view.innerHTML = `${back}<div class="report-list">${skeletonHTML()}</div>`;
   try {
-    const { files } = await fetchDirItems(`report/request/${company}`);
+    const { files } = await fetchDirItems(`report/company/${company}`);
     if (!files.length) {
       view.innerHTML = `${back}<p class="empty-msg">아직 보고서가 없습니다.</p>`;
       return;
@@ -405,7 +405,7 @@ async function renderDetail(company, slug) {
   const back = `<span class="back-link" onclick="navigate('${company}')">← ${company}</span>`;
   view.innerHTML = `${back}<div class="report-list">${skeletonHTML()}</div>`;
   try {
-    const md   = await fetchFileContent(`report/request/${company}/${slug}.md`);
+    const md   = await fetchFileContent(`report/company/${company}/${slug}.md`);
     const html = marked.parse(md);
     view.innerHTML = `
       <div class="detail-actions">
@@ -431,6 +431,11 @@ function copyLink() {
 
 /* ── Request Modal ── */
 function openReqModal() {
+  if (!localStorage.getItem('gh_token')) {
+    const token = prompt('GitHub Personal Access Token을 입력하세요.\n(issues:write 권한 필요, 한 번만 입력하면 저장됩니다)');
+    if (!token) return;
+    localStorage.setItem('gh_token', token.trim());
+  }
   document.getElementById('reqOverlay').style.display = 'block';
   document.getElementById('reqModal').style.display = 'block';
   setTimeout(() => document.getElementById('reqInput').focus(), 50);
@@ -442,16 +447,40 @@ function closeReqModal() {
   document.getElementById('reqInput').value = '';
 }
 
-function submitReq() {
+async function submitReq() {
   const name = document.getElementById('reqInput').value.trim();
   if (!name) return;
-  const title = encodeURIComponent(`[기업분석요청] ${name}`);
-  const body  = encodeURIComponent(`기업명: ${name}\n\n요청 날짜: ${new Date().toISOString().slice(0,10)}\n\n해당 기업의 일간 리포트 추가를 요청합니다.`);
-  window.open(`https://github.com/jaywapp/claude-buffett/issues/new?title=${title}&body=${body}`, '_blank');
-  closeReqModal();
-  const toast = document.getElementById('reqToast');
-  toast.style.display = 'block';
-  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+  const token = localStorage.getItem('gh_token');
+  if (!token) { openReqModal(); return; }
+  const btn = document.querySelector('.modal-submit');
+  btn.textContent = '요청 중…'; btn.disabled = true;
+  try {
+    const res = await fetch('https://api.github.com/repos/jaywapp/claude-buffett/issues', {
+      method: 'POST',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: `[기업분석요청] ${name}`,
+        body: `기업명: ${name}\n\n요청 날짜: ${new Date().toISOString().slice(0,10)}\n\n해당 기업의 일간 리포트 추가를 요청합니다.`,
+        labels: ['기업분석요청']
+      })
+    });
+    if (!res.ok) {
+      if (res.status === 401) { localStorage.removeItem('gh_token'); }
+      throw new Error(`HTTP ${res.status}`);
+    }
+    closeReqModal();
+    showToast('내일부터 요청하신 기업의 리포트가 추가됩니다.');
+  } catch (e) {
+    showToast(`요청 실패: ${e.message}`);
+  } finally {
+    btn.textContent = '요청'; btn.disabled = false;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('reqToast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
 }
 
 /* ── Init ── */
