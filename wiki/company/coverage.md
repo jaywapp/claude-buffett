@@ -31,8 +31,9 @@ GitHub 이슈([jaywapp/claude-buffett](https://github.com/jaywapp/claude-buffett
 
 **이슈 제목 형식:**
 ```
-[기업추가] 기업명 티커
+[기업추가] 기업명
 ```
+티커 번호는 몰라도 됩니다. 메시가 자동으로 조회합니다.
 
 **이슈 본문 (선택):**
 ```
@@ -41,5 +42,5 @@ GitHub 이슈([jaywapp/claude-buffett](https://github.com/jaywapp/claude-buffett
 ```
 
 **예시:**
-- 제목: `[기업추가] 카카오 035720`
-- 제목: `[기업추가] 두산에너빌리티 034020`
+- 제목: `[기업추가] 카카오`
+- 제목: `[기업추가] 두산에너빌리티`
