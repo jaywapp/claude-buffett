@@ -216,7 +216,8 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
 
     async function fetchReportContent(path) {
       const data = await fetchJSON(`${API}/repos/${REPO}/contents/${path}`);
-      return atob(data.content.replace(/\s/g, ''));
+      const bytes = Uint8Array.from(atob(data.content.replace(/\s/g, '')), c => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
     }
 
     function parseFileName(name) {
