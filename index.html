@@ -227,12 +227,15 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
 
     /* ── API ── */
     async function fetchJSON(url) {
-      const hit = sessionStorage.getItem(url);
-      if (hit) return JSON.parse(hit);
+      const isFileContent = url.endsWith('.md');
+      if (isFileContent) {
+        const hit = sessionStorage.getItem(url);
+        if (hit) return JSON.parse(hit);
+      }
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      sessionStorage.setItem(url, JSON.stringify(data));
+      if (isFileContent) sessionStorage.setItem(url, JSON.stringify(data));
       return data;
     }
 
