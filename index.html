@@ -175,9 +175,21 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div id="app">Loading…</div>
+  <header class="site-header">
+    <div class="container header-inner">
+      <span class="site-logo">버핏 리포트</span>
+      <nav class="tab-nav" id="tabNav">
+        <button class="tab-btn active" data-type="request">요청</button>
+        <button class="tab-btn" data-type="daily">일간</button>
+        <button class="tab-btn" data-type="weekly">주간</button>
+      </nav>
+    </div>
+  </header>
+  <main class="container" id="main">
+    <div id="view"></div>
+  </main>
   <script>
-    document.getElementById('app').textContent = 'Setup complete';
+    /* JS will be added in Task 4 */
   </script>
 </body>
 </html>
