@@ -206,9 +206,13 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
     function folderLabel(name) { return FOLDER_LABEL[name] || name; }
 
     /* ── Folders ── */
+    const FOLDER_ORDER = ['request', 'daily', 'weekly'];
+
     async function fetchFolders() {
       const items = await fetchJSON(`${API}/repos/${REPO}/contents/report`);
-      return items.filter(f => f.type === 'dir').map(f => f.name);
+      const dirs = items.filter(f => f.type === 'dir').map(f => f.name);
+      return [...FOLDER_ORDER.filter(f => dirs.includes(f)),
+              ...dirs.filter(f => !FOLDER_ORDER.includes(f)).sort()];
     }
 
     async function initTabs() {
