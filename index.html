@@ -60,7 +60,19 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
   justify-content: space-between;
   height: 100%;
 }
-.site-logo { font-size: 20px; font-weight: 700; color: var(--ink); }
+.site-logo { font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.15; }
+
+/* Copy link button */
+.detail-actions { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.copy-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm); padding: 6px 12px;
+  cursor: pointer; font-family: inherit; font-size: 13px; color: var(--muted);
+  transition: border-color 0.15s, color 0.15s;
+}
+.copy-btn:hover { border-color: var(--ink); color: var(--ink); }
+.copy-btn.copied { border-color: var(--rausch); color: var(--rausch); }
 
 /* Tabs */
 .tab-nav { display: flex; }
@@ -180,7 +192,7 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <span class="site-logo">버핏 리포트</span>
+      <span class="site-logo">Claude<br>Buffett</span>
       <nav class="tab-nav" id="tabNav">
         <button class="tab-btn active" data-type="request">요청</button>
         <button class="tab-btn" data-type="daily">일간</button>
@@ -296,7 +308,10 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
         const md   = await fetchReportContent(path);
         const html = marked.parse(md);
         view.innerHTML = `
-          <span class="back-link" onclick="navigate('${type}')">← 목록으로</span>
+          <div class="detail-actions">
+            <span class="back-link" onclick="navigate('${type}')">← 목록으로</span>
+            <button class="copy-btn" id="copyBtn" onclick="copyLink()">🔗 링크 복사</button>
+          </div>
           <div class="markdown-body">${html}</div>`;
       } catch {
         view.innerHTML = `
@@ -314,6 +329,17 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
       syncTabs(type);
       if (slug) await renderDetail(type, slug);
       else       await renderList(type);
+    }
+
+    /* ── Copy Link ── */
+    function copyLink() {
+      navigator.clipboard.writeText(location.href).then(() => {
+        const btn = document.getElementById('copyBtn');
+        if (!btn) return;
+        btn.textContent = '✓ 복사됨';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '🔗 링크 복사'; btn.classList.remove('copied'); }, 2000);
+      });
     }
 
     /* ── Init ── */
