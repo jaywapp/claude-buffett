@@ -193,11 +193,7 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
   <header class="site-header">
     <div class="container header-inner">
       <span class="site-logo">Claude<br>Buffett</span>
-      <nav class="tab-nav" id="tabNav">
-        <button class="tab-btn active" data-type="request">요청</button>
-        <button class="tab-btn" data-type="daily">일간</button>
-        <button class="tab-btn" data-type="weekly">주간</button>
-      </nav>
+      <nav class="tab-nav" id="tabNav"></nav>
     </div>
   </header>
   <main class="container" id="main">
@@ -206,7 +202,24 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
   <script>
     const REPO = 'jaywapp/claude-buffett';
     const API  = 'https://api.github.com';
-    const TYPE_LABEL = { request: '요청', daily: '일간', weekly: '주간' };
+    const FOLDER_LABEL = { request: '요청', daily: '일간', weekly: '주간' };
+    function folderLabel(name) { return FOLDER_LABEL[name] || name; }
+
+    /* ── Folders ── */
+    async function fetchFolders() {
+      const items = await fetchJSON(`${API}/repos/${REPO}/contents/report`);
+      return items.filter(f => f.type === 'dir').map(f => f.name);
+    }
+
+    async function initTabs() {
+      const folders = await fetchFolders();
+      const { type: hashType } = parseHash();
+      const active = folders.includes(hashType) ? hashType : folders[0];
+      document.getElementById('tabNav').innerHTML = folders.map(f =>
+        `<button class="tab-btn${f === active ? ' active' : ''}" data-type="${f}">${folderLabel(f)}</button>`
+      ).join('');
+      return active;
+    }
 
     /* ── API ── */
     async function fetchJSON(url) {
@@ -244,9 +257,9 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
     /* ── Router ── */
     function parseHash() {
       const hash  = location.hash.replace(/^#\/?/, '');
-      if (!hash)  return { type: 'request', slug: null };
+      if (!hash)  return { type: null, slug: null };
       const parts = hash.split('/');
-      const type  = ['request','daily','weekly'].includes(parts[0]) ? parts[0] : 'request';
+      const type  = parts[0] || null;
       const slug  = parts.length > 1 ? parts.slice(1).join('/') : null;
       return { type, slug };
     }
@@ -284,7 +297,7 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
           return `<div class="report-card" onclick="navigate('${type}/${slug}')">
             <div class="card-meta">
               <span class="card-date">${date}</span>
-              <span class="card-badge">${TYPE_LABEL[type]}</span>
+              <span class="card-badge">${folderLabel(type)}</span>
             </div>
             <div class="card-title">${title}</div>
           </div>`;
@@ -348,7 +361,10 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
       if (btn) navigate(btn.dataset.type);
     });
     window.addEventListener('hashchange', route);
-    route();
+    initTabs().then(active => {
+      if (!parseHash().type) navigate(active);
+      else route();
+    });
   </script>
 </body>
 </html>
