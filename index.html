@@ -189,7 +189,136 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
     <div id="view"></div>
   </main>
   <script>
-    /* JS will be added in Task 4 */
+    const REPO = 'jaywapp/claude-buffett';
+    const API  = 'https://api.github.com';
+    const TYPE_LABEL = { request: '요청', daily: '일간', weekly: '주간' };
+
+    /* ── API ── */
+    async function fetchJSON(url) {
+      const hit = sessionStorage.getItem(url);
+      if (hit) return JSON.parse(hit);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      sessionStorage.setItem(url, JSON.stringify(data));
+      return data;
+    }
+
+    async function fetchReportList(type) {
+      const files = await fetchJSON(`${API}/repos/${REPO}/contents/report/${type}`);
+      return files
+        .filter(f => f.type === 'file' && !f.name.startsWith('_'))
+        .sort((a, b) => b.name.localeCompare(a.name));
+    }
+
+    async function fetchReportContent(path) {
+      const data = await fetchJSON(`${API}/repos/${REPO}/contents/${path}`);
+      return atob(data.content.replace(/\s/g, ''));
+    }
+
+    function parseFileName(name) {
+      const base  = name.replace(/\.md$/, '');
+      const m     = base.match(/^(\d{4}-\d{2}-\d{2})-?(.*)/);
+      const date  = m ? m[1] : '';
+      const raw   = m ? m[2] : base;
+      const title = raw.replace(/-/g, ' ') || base;
+      return { date, title };
+    }
+
+    /* ── Router ── */
+    function parseHash() {
+      const hash  = location.hash.replace(/^#\/?/, '');
+      if (!hash)  return { type: 'request', slug: null };
+      const parts = hash.split('/');
+      const type  = ['request','daily','weekly'].includes(parts[0]) ? parts[0] : 'request';
+      const slug  = parts.length > 1 ? parts.slice(1).join('/') : null;
+      return { type, slug };
+    }
+
+    function navigate(hash) { location.hash = hash; }
+
+    function syncTabs(type) {
+      document.querySelectorAll('.tab-btn').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.type === type)
+      );
+    }
+
+    /* ── Skeleton ── */
+    function skeletonHTML() {
+      return Array(3).fill(0).map(() => `
+        <div class="skeleton">
+          <div class="skeleton-line" style="width:28%;height:14px"></div>
+          <div class="skeleton-line" style="width:65%;height:18px;margin-top:10px"></div>
+        </div>`).join('');
+    }
+
+    /* ── List View ── */
+    async function renderList(type) {
+      const view = document.getElementById('view');
+      view.innerHTML = `<div class="report-list">${skeletonHTML()}</div>`;
+      try {
+        const files = await fetchReportList(type);
+        if (!files.length) {
+          view.innerHTML = '<p class="empty-msg">아직 보고서가 없습니다.</p>';
+          return;
+        }
+        view.innerHTML = `<div class="report-list">${files.map(f => {
+          const { date, title } = parseFileName(f.name);
+          const slug = encodeURIComponent(f.name.replace(/\.md$/, ''));
+          return `<div class="report-card" onclick="navigate('${type}/${slug}')">
+            <div class="card-meta">
+              <span class="card-date">${date}</span>
+              <span class="card-badge">${TYPE_LABEL[type]}</span>
+            </div>
+            <div class="card-title">${title}</div>
+          </div>`;
+        }).join('')}</div>`;
+      } catch {
+        view.innerHTML = `<div class="error-msg">
+          <p>보고서를 불러올 수 없습니다.</p>
+          <button class="retry-btn" onclick="renderList('${type}')">다시 시도</button>
+        </div>`;
+      }
+    }
+
+    /* ── Detail View ── */
+    async function renderDetail(type, slug) {
+      const view = document.getElementById('view');
+      const path = `report/${type}/${decodeURIComponent(slug)}.md`;
+      view.innerHTML = `
+        <span class="back-link" onclick="navigate('${type}')">← 목록으로</span>
+        <div class="report-list">${skeletonHTML()}</div>`;
+      try {
+        const md   = await fetchReportContent(path);
+        const html = marked.parse(md);
+        view.innerHTML = `
+          <span class="back-link" onclick="navigate('${type}')">← 목록으로</span>
+          <div class="markdown-body">${html}</div>`;
+      } catch {
+        view.innerHTML = `
+          <span class="back-link" onclick="navigate('${type}')">← 목록으로</span>
+          <div class="error-msg">
+            <p>보고서를 불러올 수 없습니다.</p>
+            <button class="retry-btn" onclick="route()">다시 시도</button>
+          </div>`;
+      }
+    }
+
+    /* ── Route dispatcher ── */
+    async function route() {
+      const { type, slug } = parseHash();
+      syncTabs(type);
+      if (slug) await renderDetail(type, slug);
+      else       await renderList(type);
+    }
+
+    /* ── Init ── */
+    document.getElementById('tabNav').addEventListener('click', e => {
+      const btn = e.target.closest('.tab-btn');
+      if (btn) navigate(btn.dataset.type);
+    });
+    window.addEventListener('hashchange', route);
+    route();
   </script>
 </body>
 </html>
