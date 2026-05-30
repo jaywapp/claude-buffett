@@ -19,7 +19,7 @@
 - `rules\agents\messi.md` — 행동 원칙·권한
 - `rules\investment.md` — 투자 규칙
 - `rules\communication.md` — 팀원 보고 체계
-- `rules\reporting.md` — 보고서 규칙
+- `rules\reporting.md` — 보고서 규칙 (`report\company\` 기업 리포트 주역할)
 - `rules\tools.md` — 툴 활용 가이드
 
 ## 팀원 고용 규칙
