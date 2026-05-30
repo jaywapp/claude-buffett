@@ -31,6 +31,6 @@
 ## 임무 위임 형식 (메시 → 팀원)
 메시가 서브에이전트를 spawn할 때 프롬프트 필수 포함 항목:
 1. `rules\agents\[팀원이름].md` 전체 내용
-2. 현재 포트폴리오 현황 (`wiki\portfolio\holdings.md`)
+2. 포트폴리오 현황 (`wiki\portfolio\holdings.md`): 보유 종목이 있을 때만 포함. 비어있으면 생략.
 3. 구체적인 임무 설명
 4. 결과물 형식 및 저장 위치
