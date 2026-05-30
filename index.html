@@ -239,8 +239,12 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
       return data;
     }
 
+    function encPath(p) {
+      return p.split('/').map(encodeURIComponent).join('/');
+    }
+
     async function fetchDirItems(apiPath) {
-      const items = await fetchJSON(`${API}/repos/${REPO}/contents/${apiPath}`);
+      const items = await fetchJSON(`${API}/repos/${REPO}/contents/${encPath(apiPath)}`);
       return {
         dirs:  items.filter(f => f.type === 'dir'),
         files: items.filter(f => f.type === 'file' && !f.name.startsWith('_'))
@@ -249,7 +253,7 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
     }
 
     async function fetchFileContent(apiPath) {
-      const data = await fetchJSON(`${API}/repos/${REPO}/contents/${apiPath}`);
+      const data = await fetchJSON(`${API}/repos/${REPO}/contents/${encPath(apiPath)}`);
       const bytes = Uint8Array.from(atob(data.content.replace(/\s/g, '')), c => c.charCodeAt(0));
       return new TextDecoder().decode(bytes);
     }
