@@ -239,39 +239,42 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
       return data;
     }
 
-    async function fetchReportList(type) {
-      const files = await fetchJSON(`${API}/repos/${REPO}/contents/report/${type}`);
-      return files
-        .filter(f => f.type === 'file' && !f.name.startsWith('_'))
-        .sort((a, b) => b.name.localeCompare(a.name));
+    async function fetchDirItems(apiPath) {
+      const items = await fetchJSON(`${API}/repos/${REPO}/contents/${apiPath}`);
+      return {
+        dirs:  items.filter(f => f.type === 'dir'),
+        files: items.filter(f => f.type === 'file' && !f.name.startsWith('_'))
+                    .sort((a, b) => b.name.localeCompare(a.name)),
+      };
     }
 
-    async function fetchReportContent(path) {
-      const data = await fetchJSON(`${API}/repos/${REPO}/contents/${path}`);
+    async function fetchFileContent(apiPath) {
+      const data = await fetchJSON(`${API}/repos/${REPO}/contents/${apiPath}`);
       const bytes = Uint8Array.from(atob(data.content.replace(/\s/g, '')), c => c.charCodeAt(0));
       return new TextDecoder().decode(bytes);
     }
 
     function parseFileName(name) {
-      const base  = name.replace(/\.md$/, '');
-      const m     = base.match(/^(\d{4}-\d{2}-\d{2})-?(.*)/);
-      const date  = m ? m[1] : '';
-      const raw   = m ? m[2] : base;
-      const title = raw.replace(/-/g, ' ') || base;
-      return { date, title };
+      const base = name.replace(/\.md$/, '');
+      const m    = base.match(/^(\d{4}-\d{2}-\d{2})-?(.*)/);
+      const date = m ? m[1] : '';
+      const raw  = m ? m[2] : base;
+      return { date, title: raw.replace(/-/g, ' ') || date };
     }
 
     /* ── Router ── */
     function parseHash() {
-      const hash  = location.hash.replace(/^#\/?/, '');
-      if (!hash)  return { type: null, slug: null };
-      const parts = hash.split('/');
-      const type  = parts[0] || null;
-      const slug  = parts.length > 1 ? parts.slice(1).join('/') : null;
-      return { type, slug };
+      const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+      return {
+        type:    parts[0] ? decodeURIComponent(parts[0]) : null,
+        company: parts[1] ? decodeURIComponent(parts[1]) : null,
+        slug:    parts[2] ? decodeURIComponent(parts[2]) : null,
+      };
     }
 
-    function navigate(hash) { location.hash = hash; }
+    function navigate(...segments) {
+      location.hash = segments.map(encodeURIComponent).join('/');
+    }
 
     function syncTabs(type) {
       document.querySelectorAll('.tab-btn').forEach(btn =>
@@ -288,67 +291,101 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
         </div>`).join('');
     }
 
-    /* ── List View ── */
+    function errorHTML(msg, retryCall) {
+      return `<div class="error-msg"><p>${msg}</p>
+        <button class="retry-btn" onclick="${retryCall}">다시 시도</button></div>`;
+    }
+
+    /* ── Level 1: type → companies or flat files ── */
     async function renderList(type) {
       const view = document.getElementById('view');
       view.innerHTML = `<div class="report-list">${skeletonHTML()}</div>`;
       try {
-        const files = await fetchReportList(type);
-        if (!files.length) {
+        const { dirs, files } = await fetchDirItems(`report/${type}`);
+        if (!dirs.length && !files.length) {
           view.innerHTML = '<p class="empty-msg">아직 보고서가 없습니다.</p>';
           return;
         }
-        view.innerHTML = `<div class="report-list">${files.map(f => {
+        const dirCards = dirs.map(d => `
+          <div class="report-card" onclick="navigate('${type}','${d.name}')">
+            <div class="card-meta"><span class="card-badge">${folderLabel(type)}</span></div>
+            <div class="card-title">${d.name}</div>
+          </div>`).join('');
+        const fileCards = files.map(f => {
           const { date, title } = parseFileName(f.name);
-          const slug = encodeURIComponent(f.name.replace(/\.md$/, ''));
-          return `<div class="report-card" onclick="navigate('${type}/${slug}')">
+          const slug = f.name.replace(/\.md$/, '');
+          return `<div class="report-card" onclick="navigate('${type}','${slug}')">
             <div class="card-meta">
               <span class="card-date">${date}</span>
               <span class="card-badge">${folderLabel(type)}</span>
             </div>
             <div class="card-title">${title}</div>
           </div>`;
-        }).join('')}</div>`;
+        }).join('');
+        view.innerHTML = `<div class="report-list">${dirCards}${fileCards}</div>`;
       } catch {
-        view.innerHTML = `<div class="error-msg">
-          <p>보고서를 불러올 수 없습니다.</p>
-          <button class="retry-btn" onclick="renderList('${type}')">다시 시도</button>
-        </div>`;
+        view.innerHTML = errorHTML('보고서를 불러올 수 없습니다.', `renderList('${type}')`);
       }
     }
 
-    /* ── Detail View ── */
-    async function renderDetail(type, slug) {
+    /* ── Level 2: company → file list ── */
+    async function renderCompanyList(type, company) {
       const view = document.getElementById('view');
-      const path = `report/${type}/${decodeURIComponent(slug)}.md`;
-      view.innerHTML = `
-        <span class="back-link" onclick="navigate('${type}')">← 목록으로</span>
-        <div class="report-list">${skeletonHTML()}</div>`;
+      const backLink = `<span class="back-link" onclick="navigate('${type}')">← ${folderLabel(type)} 목록</span>`;
+      view.innerHTML = `${backLink}<div class="report-list">${skeletonHTML()}</div>`;
       try {
-        const md   = await fetchReportContent(path);
+        const { files } = await fetchDirItems(`report/${type}/${company}`);
+        if (!files.length) {
+          view.innerHTML = `${backLink}<p class="empty-msg">아직 보고서가 없습니다.</p>`;
+          return;
+        }
+        view.innerHTML = `${backLink}<div class="report-list">${files.map(f => {
+          const { date, title } = parseFileName(f.name);
+          const slug = f.name.replace(/\.md$/, '');
+          return `<div class="report-card" onclick="navigate('${type}','${company}','${slug}')">
+            <div class="card-meta">
+              <span class="card-date">${date}</span>
+              <span class="card-badge">${company}</span>
+            </div>
+            <div class="card-title">${title}</div>
+          </div>`;
+        }).join('')}</div>`;
+      } catch {
+        view.innerHTML = `${backLink}${errorHTML('보고서를 불러올 수 없습니다.', `renderCompanyList('${type}','${company}')`)}`;
+      }
+    }
+
+    /* ── Level 3: detail ── */
+    async function renderDetail(type, company, slug) {
+      const view = document.getElementById('view');
+      const backHash  = company ? `${encodeURIComponent(type)}/${encodeURIComponent(company)}` : encodeURIComponent(type);
+      const backLabel = company || folderLabel(type);
+      const backLink  = `<span class="back-link" onclick="location.hash='${backHash}'">← ${backLabel}</span>`;
+      view.innerHTML  = `${backLink}<div class="report-list">${skeletonHTML()}</div>`;
+      try {
+        const apiPath = company
+          ? `report/${type}/${company}/${slug}.md`
+          : `report/${type}/${slug}.md`;
+        const md   = await fetchFileContent(apiPath);
         const html = marked.parse(md);
         view.innerHTML = `
           <div class="detail-actions">
-            <span class="back-link" onclick="navigate('${type}')">← 목록으로</span>
+            ${backLink}
             <button class="copy-btn" id="copyBtn" onclick="copyLink()">🔗 링크 복사</button>
           </div>
           <div class="markdown-body">${html}</div>`;
       } catch {
-        view.innerHTML = `
-          <span class="back-link" onclick="navigate('${type}')">← 목록으로</span>
-          <div class="error-msg">
-            <p>보고서를 불러올 수 없습니다.</p>
-            <button class="retry-btn" onclick="route()">다시 시도</button>
-          </div>`;
+        view.innerHTML = `${backLink}${errorHTML('보고서를 불러올 수 없습니다.', 'route()')}`;
       }
     }
 
     /* ── Route dispatcher ── */
     async function route() {
-      const { type, slug } = parseHash();
+      const { type, company, slug } = parseHash();
       syncTabs(type);
-      if (slug) await renderDetail(type, slug);
-      else       await renderList(type);
+      if (slug)         await renderDetail(type, company, slug);
+      else if (company) await renderCompanyList(type, company);
+      else              await renderList(type);
     }
 
     /* ── Copy Link ── */
