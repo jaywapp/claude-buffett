@@ -161,6 +161,59 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
   .markdown-body p, .markdown-body li { font-size: 15px; }
   .markdown-body table { display: block; overflow-x: auto; }
 }
+/* Request button */
+.req-btn {
+  background: var(--rausch); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+.req-btn:hover { background: var(--rausch-hover); }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 100;
+}
+.modal {
+  display: none; position: fixed;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  background: var(--canvas); border-radius: var(--radius-md);
+  padding: 28px 24px; width: min(360px, calc(100vw - 32px));
+  z-index: 101; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.modal-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.modal-desc { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+.modal-input {
+  width: 100%; padding: 10px 14px;
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 15px; color: var(--ink);
+  outline: none; margin-bottom: 16px;
+}
+.modal-input:focus { border-color: var(--ink); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-cancel {
+  background: none; border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm); padding: 8px 16px;
+  font-family: inherit; font-size: 14px; color: var(--muted); cursor: pointer;
+}
+.modal-cancel:hover { color: var(--ink); border-color: var(--ink); }
+.modal-submit {
+  background: var(--rausch); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 8px 16px;
+  font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.modal-submit:hover { background: var(--rausch-hover); }
+
+/* Toast */
+.toast {
+  display: none; position: fixed;
+  bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff;
+  padding: 12px 20px; border-radius: var(--radius-full);
+  font-size: 14px; z-index: 200; white-space: nowrap;
+}
+
 /* Search */
 .search-wrap {
   position: sticky; top: 48px; z-index: 9;
@@ -184,11 +237,24 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
 <header class="site-header">
   <div class="container header-inner">
     <span class="site-logo">Claude<br>Buffett</span>
+    <button class="req-btn" onclick="openReqModal()">+ 기업 분석 요청</button>
   </div>
 </header>
 <main class="container" id="main">
   <div id="view"></div>
 </main>
+<div class="modal-overlay" id="reqOverlay" onclick="closeReqModal()"></div>
+<div class="modal" id="reqModal">
+  <div class="modal-title">기업 분석 요청</div>
+  <p class="modal-desc">분석을 원하는 기업명을 입력하세요.</p>
+  <input class="modal-input" id="reqInput" placeholder="예: 삼성전자" maxlength="40"
+         onkeydown="if(event.key==='Enter')submitReq()">
+  <div class="modal-actions">
+    <button class="modal-cancel" onclick="closeReqModal()">취소</button>
+    <button class="modal-submit" onclick="submitReq()">요청</button>
+  </div>
+</div>
+<div class="toast" id="reqToast">내일부터 요청하신 기업의 리포트가 추가됩니다.</div>
 <script>
 const REPO = 'jaywapp/claude-buffett';
 const API  = 'https://api.github.com';
@@ -361,6 +427,31 @@ function copyLink() {
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = '🔗 링크 복사'; btn.classList.remove('copied'); }, 2000);
   });
+}
+
+/* ── Request Modal ── */
+function openReqModal() {
+  document.getElementById('reqOverlay').style.display = 'block';
+  document.getElementById('reqModal').style.display = 'block';
+  setTimeout(() => document.getElementById('reqInput').focus(), 50);
+}
+
+function closeReqModal() {
+  document.getElementById('reqOverlay').style.display = 'none';
+  document.getElementById('reqModal').style.display = 'none';
+  document.getElementById('reqInput').value = '';
+}
+
+function submitReq() {
+  const name = document.getElementById('reqInput').value.trim();
+  if (!name) return;
+  const title = encodeURIComponent(`[기업분석요청] ${name}`);
+  const body  = encodeURIComponent(`기업명: ${name}\n\n요청 날짜: ${new Date().toISOString().slice(0,10)}\n\n해당 기업의 일간 리포트 추가를 요청합니다.`);
+  window.open(`https://github.com/jaywapp/claude-buffett/issues/new?title=${title}&body=${body}`, '_blank');
+  closeReqModal();
+  const toast = document.getElementById('reqToast');
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
 }
 
 /* ── Init ── */
