@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """스크리닝 데이터 수집 스크립트 (음바페)"""
 
+import re
 import sys
 from datetime import datetime, timedelta
 import traceback
@@ -15,22 +16,37 @@ except ImportError as e:
     sys.exit(1)
 
 
-# 대상 종목 정의
-TICKERS = [
-    ("005930", "삼성전자"),
-    ("000660", "SK하이닉스"),
-    ("042700", "한미반도체"),
-    ("087010", "펩트론"),
-    ("000100", "유한양행"),
-    ("042660", "한화오션"),
-    ("329180", "HD현대중공업"),
-    ("010120", "LS ELECTRIC"),
-    ("298040", "효성중공업"),
-    ("105560", "KB금융"),
-]
+# coverage.md에서 티커 목록을 동적으로 로드
+COVERAGE_PATH = Path("D:/Agents/Stock/wiki/company/coverage.md")
 
-COLLECTION_DATE = "2026-05-30"
-REFERENCE_DATE = "2026-05-29"  # 금요일
+
+def load_tickers_from_coverage(path: Path) -> list[tuple[str, str]]:
+    """coverage.md 파일에서 (ticker, name) 목록을 파싱한다.
+
+    테이블 형식: | 기업명 | 티커 | 시장 | 섹터 | 등록일 |
+    """
+    if not path.exists():
+        print(f"[경고] coverage.md 파일을 찾을 수 없습니다: {path}")
+        return []
+
+    tickers = []
+    # 헤더/구분선 행은 건너뛰고, 데이터 행만 파싱
+    row_pattern = re.compile(
+        r"^\|\s*(?P<name>[^|]+?)\s*\|\s*(?P<ticker>\d{6})\s*\|"
+    )
+    for line in path.read_text(encoding="utf-8").splitlines():
+        m = row_pattern.match(line)
+        if m:
+            tickers.append((m.group("ticker"), m.group("name")))
+    return tickers
+
+
+# 오늘 날짜(수집일) 및 기준일(전날) 자동 계산
+COLLECTION_DATE = datetime.today().strftime("%Y-%m-%d")
+REFERENCE_DATE = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+# 동적 티커 목록 (coverage.md 기준)
+TICKERS = load_tickers_from_coverage(COVERAGE_PATH)
 
 
 def get_ticker_data(ticker):
@@ -71,7 +87,13 @@ def get_ticker_data(ticker):
 def main():
     print("=" * 80)
     print(f"스크리닝 데이터 수집 중... ({COLLECTION_DATE})")
+    print(f"기준가: {REFERENCE_DATE} 종가")
+    print(f"대상 종목 수: {len(TICKERS)}")
     print("=" * 80 + "\n")
+
+    if not TICKERS:
+        print("[오류] 로드된 종목이 없습니다. coverage.md를 확인하세요.")
+        return 1
 
     results = []
     errors = []
@@ -123,7 +145,7 @@ def generate_report(results, errors):
         f"# 스크리닝 데이터 — {COLLECTION_DATE}",
         "",
         f"수집일: {COLLECTION_DATE}",
-        f"기준가: {REFERENCE_DATE} (금요일 종가)",
+        f"기준가: {REFERENCE_DATE} 종가",
         "",
         "| 티커 | 종목명 | 현재가 | 52W고점 | 52W저점 |",
         "|------|--------|--------|---------|---------|",
