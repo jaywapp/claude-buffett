@@ -9,7 +9,7 @@ import traceback
 from pathlib import Path
 
 try:
-    import FinanceDataReader as fdr
+    from pykrx import stock
     import pandas as pd
 except ImportError as e:
     print(f"Error: {e}")
@@ -43,31 +43,36 @@ def load_tickers_from_coverage(path: Path) -> list[tuple[str, str]]:
 
 # 오늘 날짜(수집일) 및 기준일(전날) 자동 계산
 COLLECTION_DATE = datetime.today().strftime("%Y-%m-%d")
-REFERENCE_DATE = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+# 금요일(2026-05-30) 종가 기준
+REFERENCE_DATE = "2026-05-30"
 
 # 동적 티커 목록 (coverage.md 기준)
 TICKERS = load_tickers_from_coverage(COVERAGE_PATH)
 
 
 def get_ticker_data(ticker):
-    """종목 데이터 조회"""
+    """종목 데이터 조회 (pykrx 사용)"""
     try:
         # 1년 데이터 조회
         end_date = datetime.strptime(REFERENCE_DATE, "%Y-%m-%d")
         start_date = end_date - timedelta(days=365)
 
-        df = fdr.DataReader(ticker, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+        df = stock.get_market_ohlcv(
+            start_date.strftime("%Y%m%d"),
+            end_date.strftime("%Y%m%d"),
+            ticker
+        )
 
         if df.empty:
             return None
 
         # 최신 데이터 (기준일)
         latest = df.iloc[-1]
-        current_price = float(latest["Close"])
+        current_price = float(latest["종가"])
 
         # 52주 범위
-        high_52w = float(df["High"].max())
-        low_52w = float(df["Low"].min())
+        high_52w = float(df["고가"].max())
+        low_52w = float(df["저가"].min())
 
         # 최근 5거래일
         ohlcv_5d = df.tail(5).copy()
