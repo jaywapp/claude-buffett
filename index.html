@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>버핏 리포트</title>
-  <meta property="og:title" content="버핏 리포트">
-  <meta property="og:description" content="Claude Buffett 투자 분석 보고서">
+  <title>일간 기업리포트</title>
+  <meta property="og:title" content="일간 기업리포트">
+  <meta property="og:description" content="Claude Buffett 일간 기업 분석 리포트">
   <meta name="theme-color" content="#ff385c">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
 
 /* Header */
 .site-header {
-  height: 64px;
+  height: 48px;
   border-bottom: 1px solid var(--hairline);
   background: var(--canvas);
   position: sticky;
@@ -73,30 +73,6 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
 }
 .copy-btn:hover { border-color: var(--ink); color: var(--ink); }
 .copy-btn.copied { border-color: var(--rausch); color: var(--rausch); }
-
-/* Tabs */
-.tab-nav { display: flex; }
-.tab-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--muted);
-  padding: 0 16px;
-  height: 64px;
-  position: relative;
-}
-.tab-btn.active { color: var(--ink); }
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--rausch);
-}
-.tab-btn:hover { color: var(--ink); }
 
 /* Main */
 #main { padding-top: 32px; padding-bottom: 64px; }
@@ -180,239 +156,401 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
 /* Responsive */
 @media (max-width: 744px) {
   .container { padding: 0 16px; }
-  .tab-nav { width: 100%; }
-  .tab-btn { flex: 1; text-align: center; padding: 0; font-size: 14px; }
   #main { padding-top: 20px; }
   .report-card { padding: 16px; }
   .markdown-body p, .markdown-body li { font-size: 15px; }
   .markdown-body table { display: block; overflow-x: auto; }
 }
+/* Company avatar */
+.company-card-inner { display: flex; align-items: center; gap: 14px; }
+.company-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: #fff;
+  flex-shrink: 0; letter-spacing: -0.5px; overflow: hidden;
+  background: var(--surface-soft);
+}
+.company-avatar img {
+  width: 44px; height: 44px; object-fit: contain; border-radius: 50%;
+}
+
+/* Request button */
+.req-btn {
+  background: var(--rausch); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+.req-btn:hover { background: var(--rausch-hover); }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 100;
+}
+.modal {
+  display: none; position: fixed;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  background: var(--canvas); border-radius: var(--radius-md);
+  padding: 28px 24px; width: min(360px, calc(100vw - 32px));
+  z-index: 101; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.modal-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.modal-desc { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+.modal-input {
+  width: 100%; padding: 10px 14px;
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 15px; color: var(--ink);
+  outline: none; margin-bottom: 16px;
+}
+.modal-input:focus { border-color: var(--ink); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-cancel {
+  background: none; border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm); padding: 8px 16px;
+  font-family: inherit; font-size: 14px; color: var(--muted); cursor: pointer;
+}
+.modal-cancel:hover { color: var(--ink); border-color: var(--ink); }
+.modal-submit {
+  background: var(--rausch); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 8px 16px;
+  font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.modal-submit:hover { background: var(--rausch-hover); }
+
+/* Toast */
+.toast {
+  display: none; position: fixed;
+  bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff;
+  padding: 12px 20px; border-radius: var(--radius-full);
+  font-size: 14px; z-index: 200; white-space: nowrap;
+}
+
+/* Search */
+.search-wrap {
+  position: sticky; top: 48px; z-index: 9;
+  background: var(--canvas);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 16px;
+}
+.search-box {
+  width: 100%; padding: 10px 14px;
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 15px; color: var(--ink);
+  outline: none; background: var(--canvas);
+}
+.search-box:focus { border-color: var(--ink); }
+.company-title { display: flex; justify-content: space-between; align-items: center; }
+.chevron { color: var(--muted); font-size: 20px; font-weight: 300; }
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <span class="site-logo">Claude<br>Buffett</span>
-      <nav class="tab-nav" id="tabNav"></nav>
+<header class="site-header">
+  <div class="container header-inner">
+    <span class="site-logo">Claude<br>Buffett</span>
+    <button class="req-btn" onclick="openReqModal()">+ 기업 분석 요청</button>
+  </div>
+</header>
+<main class="container" id="main">
+  <div id="view"></div>
+</main>
+<div class="modal-overlay" id="reqOverlay" onclick="closeReqModal()"></div>
+<div class="modal" id="reqModal">
+  <div class="modal-title">기업 분석 요청</div>
+  <p class="modal-desc">분석을 원하는 기업명을 입력하세요.</p>
+  <input class="modal-input" id="reqInput" placeholder="예: 삼성전자" maxlength="40"
+         onkeydown="if(event.key==='Enter')submitReq()">
+  <div class="modal-actions">
+    <button class="modal-cancel" onclick="closeReqModal()">취소</button>
+    <button class="modal-submit" onclick="submitReq()">요청</button>
+  </div>
+</div>
+<div class="toast" id="reqToast">내일부터 요청하신 기업의 리포트가 추가됩니다.</div>
+<script>
+const REPO = 'jaywapp/claude-buffett';
+const API  = 'https://api.github.com';
+let _companies = [];
+
+/* ── API ── */
+function encPath(p) {
+  return p.split('/').map(encodeURIComponent).join('/');
+}
+
+async function fetchJSON(url) {
+  const isFile = url.endsWith('.md');
+  if (isFile) {
+    const hit = sessionStorage.getItem(url);
+    if (hit) return JSON.parse(hit);
+  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (isFile) sessionStorage.setItem(url, JSON.stringify(data));
+  return data;
+}
+
+async function fetchDirItems(apiPath) {
+  const items = await fetchJSON(`${API}/repos/${REPO}/contents/${encPath(apiPath)}`);
+  return {
+    dirs:  items.filter(f => f.type === 'dir'),
+    files: items.filter(f => f.type === 'file' && !f.name.startsWith('_'))
+                .sort((a, b) => b.name.localeCompare(a.name)),
+  };
+}
+
+async function fetchFileContent(apiPath) {
+  const data = await fetchJSON(`${API}/repos/${REPO}/contents/${encPath(apiPath)}`);
+  const bytes = Uint8Array.from(atob(data.content.replace(/\s/g, '')), c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function parseFileName(name) {
+  const base = name.replace(/\.md$/, '');
+  const m    = base.match(/^(\d{4}-\d{2}-\d{2})-?(.*)/);
+  const date = m ? m[1] : '';
+  const raw  = m ? m[2] : base;
+  return { date, title: raw.replace(/-/g, ' ') || date };
+}
+
+/* ── Router ── */
+function parseHash() {
+  const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  return {
+    company: parts[0] ? decodeURIComponent(parts[0]) : null,
+    slug:    parts[1] ? decodeURIComponent(parts[1]) : null,
+  };
+}
+
+function navigate(...segments) {
+  location.hash = segments.map(encodeURIComponent).join('/');
+}
+
+async function route() {
+  const { company, slug } = parseHash();
+  if (slug)         await renderDetail(company, slug);
+  else if (company) await renderCompanyList(company);
+  else              await renderList();
+}
+
+/* ── Helpers ── */
+function skeletonHTML() {
+  return Array(3).fill(0).map(() => `
+    <div class="skeleton">
+      <div class="skeleton-line" style="width:28%;height:14px"></div>
+      <div class="skeleton-line" style="width:65%;height:18px;margin-top:10px"></div>
+    </div>`).join('');
+}
+
+function errorHTML(msg, retryCall) {
+  return `<div class="error-msg"><p>${msg}</p>
+    <button class="retry-btn" onclick="${retryCall}">다시 시도</button></div>`;
+}
+
+/* ── Level 1: 기업 목록 ── */
+const AVATAR_COLORS = [
+  '#e8472a','#e07c39','#d4a017','#4caf7d','#2196a8',
+  '#3b7dd8','#7b52b9','#c2185b','#00897b','#546e7a'
+];
+const COMPANY_TICKER = {
+  '삼성전자':         '005930',
+  'SK하이닉스':       '000660',
+  'KB금융':           '105560',
+  'LS일렉트릭':       '010120',
+  'HD현대중공업':     '329180',
+  '한화오션':         '042660',
+  '한미반도체':       '042700',
+  '유한양행':         '000100',
+  '효성중공업':       '298040',
+  '펩트론':           '087010',
+  '한화에어로스페이스': '012450',
+  'LG에너지솔루션':   '373220',
+  'POSCO홀딩스':      '005490',
+  '현대차':           '005380',
+  '기아':             '000270',
+  'NAVER':            '035420',
+  '카카오':           '035720',
+  'LG화학':           '051910',
+  '삼성바이오로직스': '207940',
+  '셀트리온':         '068270',
+};
+
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function avatarChar(name) {
+  return name.replace(/^(주식회사|㈜)\s*/,'')[0] || '?';
+}
+function avatarHTML(name) {
+  const ticker = COMPANY_TICKER[name];
+  const bg = avatarColor(name);
+  const ch = avatarChar(name);
+  if (ticker) {
+    return `<div class="company-avatar" style="background:${bg}">
+      <img src="https://file.alphasquare.co.kr/media/images/stock_logo/kr/${ticker}.png"
+           onerror="this.parentElement.innerHTML='${ch}'"
+           alt="${name}">
+    </div>`;
+  }
+  return `<div class="company-avatar" style="background:${bg}">${ch}</div>`;
+}
+
+function renderCompanyCards(query) {
+  const filtered = query
+    ? _companies.filter(d => d.name.toLowerCase().includes(query.toLowerCase()))
+    : _companies;
+  const list = document.getElementById('companyList');
+  if (!list) return;
+  if (!filtered.length) {
+    list.innerHTML = '<p class="empty-msg">검색 결과가 없습니다.</p>';
+    return;
+  }
+  list.innerHTML = filtered.map(d => `
+    <div class="report-card" onclick="navigate('${d.name}')">
+      <div class="company-card-inner">
+        ${avatarHTML(d.name)}
+        <div class="company-title" style="flex:1">
+          <span>${d.name}</span><span class="chevron">›</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function renderList() {
+  const view = document.getElementById('view');
+  view.innerHTML = `
+    <div class="search-wrap">
+      <input class="search-box" id="searchBox" placeholder="기업명 검색…"
+             oninput="renderCompanyCards(this.value)">
     </div>
-  </header>
-  <main class="container" id="main">
-    <div id="view"></div>
-  </main>
-  <script>
-    const REPO = 'jaywapp/claude-buffett';
-    const API  = 'https://api.github.com';
-    const FOLDER_LABEL = { request: '요청', daily: '일간', weekly: '주간' };
-    function folderLabel(name) { return FOLDER_LABEL[name] || name; }
+    <div class="report-list" id="companyList">${skeletonHTML()}</div>`;
+  try {
+    const { dirs } = await fetchDirItems('report/company');
+    _companies = dirs;
+    renderCompanyCards('');
+  } catch {
+    const list = document.getElementById('companyList');
+    if (list) list.innerHTML = errorHTML('보고서를 불러올 수 없습니다.', 'renderList()');
+  }
+}
 
-    /* ── Folders ── */
-    const FOLDER_ORDER = ['request', 'daily', 'weekly'];
-
-    async function fetchFolders() {
-      const items = await fetchJSON(`${API}/repos/${REPO}/contents/report`);
-      const dirs = items.filter(f => f.type === 'dir').map(f => f.name);
-      return [...FOLDER_ORDER.filter(f => dirs.includes(f)),
-              ...dirs.filter(f => !FOLDER_ORDER.includes(f)).sort()];
+/* ── Level 2: 기업 리포트 목록 ── */
+async function renderCompanyList(company) {
+  const view = document.getElementById('view');
+  const back = `<span class="back-link" onclick="navigate()">← 기업 목록</span>`;
+  view.innerHTML = `${back}<div class="report-list">${skeletonHTML()}</div>`;
+  try {
+    const { files } = await fetchDirItems(`report/company/${company}`);
+    if (!files.length) {
+      view.innerHTML = `${back}<p class="empty-msg">아직 보고서가 없습니다.</p>`;
+      return;
     }
+    view.innerHTML = `${back}<div class="report-list">${files.map(f => {
+      const { date, title } = parseFileName(f.name);
+      const slug = f.name.replace(/\.md$/, '');
+      return `<div class="report-card" onclick="navigate('${company}','${slug}')">
+        <div class="card-meta">
+          <span class="card-date">${date}</span>
+          <span class="card-badge">${company}</span>
+        </div>
+        <div class="card-title">${title}</div>
+      </div>`;
+    }).join('')}</div>`;
+  } catch {
+    view.innerHTML = `${back}${errorHTML('보고서를 불러올 수 없습니다.', `renderCompanyList('${company}')`)}`;
+  }
+}
 
-    async function initTabs() {
-      const folders = await fetchFolders();
-      const { type: hashType } = parseHash();
-      const active = folders.includes(hashType) ? hashType : folders[0];
-      document.getElementById('tabNav').innerHTML = folders.map(f =>
-        `<button class="tab-btn${f === active ? ' active' : ''}" data-type="${f}">${folderLabel(f)}</button>`
-      ).join('');
-      return active;
-    }
+/* ── Level 3: 상세 ── */
+async function renderDetail(company, slug) {
+  const view = document.getElementById('view');
+  const back = `<span class="back-link" onclick="navigate('${company}')">← ${company}</span>`;
+  view.innerHTML = `${back}<div class="report-list">${skeletonHTML()}</div>`;
+  try {
+    const md   = await fetchFileContent(`report/company/${company}/${slug}.md`);
+    const html = marked.parse(md);
+    view.innerHTML = `
+      <div class="detail-actions">
+        ${back}
+        <button class="copy-btn" id="copyBtn" onclick="copyLink()">🔗 링크 복사</button>
+      </div>
+      <div class="markdown-body">${html}</div>`;
+  } catch {
+    view.innerHTML = `${back}${errorHTML('보고서를 불러올 수 없습니다.', 'route()')}`;
+  }
+}
 
-    /* ── API ── */
-    async function fetchJSON(url) {
-      const isFileContent = url.endsWith('.md');
-      if (isFileContent) {
-        const hit = sessionStorage.getItem(url);
-        if (hit) return JSON.parse(hit);
-      }
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (isFileContent) sessionStorage.setItem(url, JSON.stringify(data));
-      return data;
-    }
+/* ── Copy Link ── */
+function copyLink() {
+  navigator.clipboard.writeText(location.href).then(() => {
+    const btn = document.getElementById('copyBtn');
+    if (!btn) return;
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '🔗 링크 복사'; btn.classList.remove('copied'); }, 2000);
+  });
+}
 
-    function encPath(p) {
-      return p.split('/').map(encodeURIComponent).join('/');
-    }
+/* ── Request Modal ── */
+function openReqModal() {
+  if (!localStorage.getItem('gh_token')) {
+    const token = prompt('GitHub Personal Access Token을 입력하세요.\n(issues:write 권한 필요, 한 번만 입력하면 저장됩니다)');
+    if (!token) return;
+    localStorage.setItem('gh_token', token.trim());
+  }
+  document.getElementById('reqOverlay').style.display = 'block';
+  document.getElementById('reqModal').style.display = 'block';
+  setTimeout(() => document.getElementById('reqInput').focus(), 50);
+}
 
-    async function fetchDirItems(apiPath) {
-      const items = await fetchJSON(`${API}/repos/${REPO}/contents/${encPath(apiPath)}`);
-      return {
-        dirs:  items.filter(f => f.type === 'dir'),
-        files: items.filter(f => f.type === 'file' && !f.name.startsWith('_'))
-                    .sort((a, b) => b.name.localeCompare(a.name)),
-      };
-    }
+function closeReqModal() {
+  document.getElementById('reqOverlay').style.display = 'none';
+  document.getElementById('reqModal').style.display = 'none';
+  document.getElementById('reqInput').value = '';
+}
 
-    async function fetchFileContent(apiPath) {
-      const data = await fetchJSON(`${API}/repos/${REPO}/contents/${encPath(apiPath)}`);
-      const bytes = Uint8Array.from(atob(data.content.replace(/\s/g, '')), c => c.charCodeAt(0));
-      return new TextDecoder().decode(bytes);
-    }
-
-    function parseFileName(name) {
-      const base = name.replace(/\.md$/, '');
-      const m    = base.match(/^(\d{4}-\d{2}-\d{2})-?(.*)/);
-      const date = m ? m[1] : '';
-      const raw  = m ? m[2] : base;
-      return { date, title: raw.replace(/-/g, ' ') || date };
-    }
-
-    /* ── Router ── */
-    function parseHash() {
-      const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
-      return {
-        type:    parts[0] ? decodeURIComponent(parts[0]) : null,
-        company: parts[1] ? decodeURIComponent(parts[1]) : null,
-        slug:    parts[2] ? decodeURIComponent(parts[2]) : null,
-      };
-    }
-
-    function navigate(...segments) {
-      location.hash = segments.map(encodeURIComponent).join('/');
-    }
-
-    function syncTabs(type) {
-      document.querySelectorAll('.tab-btn').forEach(btn =>
-        btn.classList.toggle('active', btn.dataset.type === type)
-      );
-    }
-
-    /* ── Skeleton ── */
-    function skeletonHTML() {
-      return Array(3).fill(0).map(() => `
-        <div class="skeleton">
-          <div class="skeleton-line" style="width:28%;height:14px"></div>
-          <div class="skeleton-line" style="width:65%;height:18px;margin-top:10px"></div>
-        </div>`).join('');
-    }
-
-    function errorHTML(msg, retryCall) {
-      return `<div class="error-msg"><p>${msg}</p>
-        <button class="retry-btn" onclick="${retryCall}">다시 시도</button></div>`;
-    }
-
-    /* ── Level 1: type → companies or flat files ── */
-    async function renderList(type) {
-      const view = document.getElementById('view');
-      view.innerHTML = `<div class="report-list">${skeletonHTML()}</div>`;
-      try {
-        const { dirs, files } = await fetchDirItems(`report/${type}`);
-        if (!dirs.length && !files.length) {
-          view.innerHTML = '<p class="empty-msg">아직 보고서가 없습니다.</p>';
-          return;
-        }
-        const dirCards = dirs.map(d => `
-          <div class="report-card" onclick="navigate('${type}','${d.name}')">
-            <div class="card-meta"><span class="card-badge">${folderLabel(type)}</span></div>
-            <div class="card-title">${d.name}</div>
-          </div>`).join('');
-        const fileCards = files.map(f => {
-          const { date, title } = parseFileName(f.name);
-          const slug = f.name.replace(/\.md$/, '');
-          return `<div class="report-card" onclick="navigate('${type}','${slug}')">
-            <div class="card-meta">
-              <span class="card-date">${date}</span>
-              <span class="card-badge">${folderLabel(type)}</span>
-            </div>
-            <div class="card-title">${title}</div>
-          </div>`;
-        }).join('');
-        view.innerHTML = `<div class="report-list">${dirCards}${fileCards}</div>`;
-      } catch {
-        view.innerHTML = errorHTML('보고서를 불러올 수 없습니다.', `renderList('${type}')`);
-      }
-    }
-
-    /* ── Level 2: company → file list ── */
-    async function renderCompanyList(type, company) {
-      const view = document.getElementById('view');
-      const backLink = `<span class="back-link" onclick="navigate('${type}')">← ${folderLabel(type)} 목록</span>`;
-      view.innerHTML = `${backLink}<div class="report-list">${skeletonHTML()}</div>`;
-      try {
-        const { files } = await fetchDirItems(`report/${type}/${company}`);
-        if (!files.length) {
-          view.innerHTML = `${backLink}<p class="empty-msg">아직 보고서가 없습니다.</p>`;
-          return;
-        }
-        view.innerHTML = `${backLink}<div class="report-list">${files.map(f => {
-          const { date, title } = parseFileName(f.name);
-          const slug = f.name.replace(/\.md$/, '');
-          return `<div class="report-card" onclick="navigate('${type}','${company}','${slug}')">
-            <div class="card-meta">
-              <span class="card-date">${date}</span>
-              <span class="card-badge">${company}</span>
-            </div>
-            <div class="card-title">${title}</div>
-          </div>`;
-        }).join('')}</div>`;
-      } catch {
-        view.innerHTML = `${backLink}${errorHTML('보고서를 불러올 수 없습니다.', `renderCompanyList('${type}','${company}')`)}`;
-      }
-    }
-
-    /* ── Level 3: detail ── */
-    async function renderDetail(type, company, slug) {
-      const view = document.getElementById('view');
-      const backHash  = company ? `${encodeURIComponent(type)}/${encodeURIComponent(company)}` : encodeURIComponent(type);
-      const backLabel = company || folderLabel(type);
-      const backLink  = `<span class="back-link" onclick="location.hash='${backHash}'">← ${backLabel}</span>`;
-      view.innerHTML  = `${backLink}<div class="report-list">${skeletonHTML()}</div>`;
-      try {
-        const apiPath = company
-          ? `report/${type}/${company}/${slug}.md`
-          : `report/${type}/${slug}.md`;
-        const md   = await fetchFileContent(apiPath);
-        const html = marked.parse(md);
-        view.innerHTML = `
-          <div class="detail-actions">
-            ${backLink}
-            <button class="copy-btn" id="copyBtn" onclick="copyLink()">🔗 링크 복사</button>
-          </div>
-          <div class="markdown-body">${html}</div>`;
-      } catch {
-        view.innerHTML = `${backLink}${errorHTML('보고서를 불러올 수 없습니다.', 'route()')}`;
-      }
-    }
-
-    /* ── Route dispatcher ── */
-    async function route() {
-      const { type, company, slug } = parseHash();
-      syncTabs(type);
-      if (slug)         await renderDetail(type, company, slug);
-      else if (company) await renderCompanyList(type, company);
-      else              await renderList(type);
-    }
-
-    /* ── Copy Link ── */
-    function copyLink() {
-      navigator.clipboard.writeText(location.href).then(() => {
-        const btn = document.getElementById('copyBtn');
-        if (!btn) return;
-        btn.textContent = '✓ 복사됨';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = '🔗 링크 복사'; btn.classList.remove('copied'); }, 2000);
-      });
-    }
-
-    /* ── Init ── */
-    document.getElementById('tabNav').addEventListener('click', e => {
-      const btn = e.target.closest('.tab-btn');
-      if (btn) navigate(btn.dataset.type);
+async function submitReq() {
+  const name = document.getElementById('reqInput').value.trim();
+  if (!name) return;
+  const token = localStorage.getItem('gh_token');
+  if (!token) { openReqModal(); return; }
+  const btn = document.querySelector('.modal-submit');
+  btn.textContent = '요청 중…'; btn.disabled = true;
+  try {
+    const res = await fetch('https://api.github.com/repos/jaywapp/claude-buffett/issues', {
+      method: 'POST',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: `[기업추가] ${name}`,
+        body: `기업명: ${name}\n\n요청 날짜: ${new Date().toISOString().slice(0,10)}\n\n해당 기업의 일간 리포트 추가를 요청합니다.`,
+        labels: ['coverage-add']
+      })
     });
-    window.addEventListener('hashchange', route);
-    initTabs().then(active => {
-      if (!parseHash().type) navigate(active);
-      else route();
-    });
-  </script>
+    if (!res.ok) {
+      if (res.status === 401) { localStorage.removeItem('gh_token'); }
+      throw new Error(`HTTP ${res.status}`);
+    }
+    closeReqModal();
+    showToast('내일부터 요청하신 기업의 리포트가 추가됩니다.');
+  } catch (e) {
+    showToast(`요청 실패: ${e.message}`);
+  } finally {
+    btn.textContent = '요청'; btn.disabled = false;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('reqToast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+/* ── Init ── */
+window.addEventListener('hashchange', route);
+route();
+</script>
 </body>
 </html>
