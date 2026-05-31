@@ -161,6 +161,15 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
   .markdown-body p, .markdown-body li { font-size: 15px; }
   .markdown-body table { display: block; overflow-x: auto; }
 }
+/* Company avatar */
+.company-card-inner { display: flex; align-items: center; gap: 14px; }
+.company-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: #fff;
+  flex-shrink: 0; letter-spacing: -0.5px;
+}
+
 /* Request button */
 .req-btn {
   background: var(--rausch); color: #fff;
@@ -336,6 +345,19 @@ function errorHTML(msg, retryCall) {
 }
 
 /* ── Level 1: 기업 목록 ── */
+const AVATAR_COLORS = [
+  '#e8472a','#e07c39','#d4a017','#4caf7d','#2196a8',
+  '#3b7dd8','#7b52b9','#c2185b','#00897b','#546e7a'
+];
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function avatarChar(name) {
+  return name.replace(/^(주식회사|㈜)\s*/,'')[0] || '?';
+}
+
 function renderCompanyCards(query) {
   const filtered = query
     ? _companies.filter(d => d.name.toLowerCase().includes(query.toLowerCase()))
@@ -348,8 +370,11 @@ function renderCompanyCards(query) {
   }
   list.innerHTML = filtered.map(d => `
     <div class="report-card" onclick="navigate('${d.name}')">
-      <div class="card-title company-title">
-        <span>${d.name}</span><span class="chevron">›</span>
+      <div class="company-card-inner">
+        <div class="company-avatar" style="background:${avatarColor(d.name)}">${avatarChar(d.name)}</div>
+        <div class="company-title" style="flex:1">
+          <span>${d.name}</span><span class="chevron">›</span>
+        </div>
       </div>
     </div>`).join('');
 }
