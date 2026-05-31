@@ -353,24 +353,27 @@ const AVATAR_COLORS = [
   '#e8472a','#e07c39','#d4a017','#4caf7d','#2196a8',
   '#3b7dd8','#7b52b9','#c2185b','#00897b','#546e7a'
 ];
-const COMPANY_DOMAIN = {
-  '삼성전자':     'samsung.com',
-  'SK하이닉스':   'skhynix.com',
-  'KB금융':       'kbfg.com',
-  'LS일렉트릭':   'ls-electric.com',
-  'HD현대중공업': 'hshi.co.kr',
-  '한화오션':     'hanwhaocean.com',
-  '한미반도체':   'hanmisemiconductor.com',
-  '유한양행':     'yuhan.co.kr',
-  '효성중공업':   'hyosunghheavy.com',
-  '펩트론':       'peptron.com',
-  '한화에어로스페이스': 'hanwhaaerospace.com',
-  'LG에너지솔루션': 'lgensol.com',
-  'POSCO홀딩스':  'posco.co.kr',
-  '현대차':       'hyundai.com',
-  '기아':         'kia.com',
-  'NAVER':        'navercorp.com',
-  '카카오':       'kakao.com',
+const COMPANY_TICKER = {
+  '삼성전자':         '005930',
+  'SK하이닉스':       '000660',
+  'KB금융':           '105560',
+  'LS일렉트릭':       '010120',
+  'HD현대중공업':     '329180',
+  '한화오션':         '042660',
+  '한미반도체':       '042700',
+  '유한양행':         '000100',
+  '효성중공업':       '267270',
+  '펩트론':           '087010',
+  '한화에어로스페이스': '012450',
+  'LG에너지솔루션':   '373220',
+  'POSCO홀딩스':      '005490',
+  '현대차':           '005380',
+  '기아':             '000270',
+  'NAVER':            '035420',
+  '카카오':           '035720',
+  'LG화학':           '051910',
+  '삼성바이오로직스': '207940',
+  '셀트리온':         '068270',
 };
 
 function avatarColor(name) {
@@ -382,17 +385,17 @@ function avatarChar(name) {
   return name.replace(/^(주식회사|㈜)\s*/,'')[0] || '?';
 }
 function avatarHTML(name) {
-  const domain = COMPANY_DOMAIN[name];
-  if (domain) {
-    const bg = avatarColor(name);
-    const ch = avatarChar(name);
-    return `<div class="company-avatar" style="background:${bg}" data-name="${name}">
-      <img src="https://logo.clearbit.com/${domain}?size=88"
-           onerror="this.parentElement.innerHTML='${ch}';this.parentElement.style.background='${bg}'"
+  const ticker = COMPANY_TICKER[name];
+  const bg = avatarColor(name);
+  const ch = avatarChar(name);
+  if (ticker) {
+    return `<div class="company-avatar" style="background:${bg}">
+      <img src="https://file.alphasquare.co.kr/media/images/stock_logo/kr/${ticker}.png"
+           onerror="this.parentElement.innerHTML='${ch}'"
            alt="${name}">
     </div>`;
   }
-  return `<div class="company-avatar" style="background:${avatarColor(name)}">${avatarChar(name)}</div>`;
+  return `<div class="company-avatar" style="background:${bg}">${ch}</div>`;
 }
 
 function renderCompanyCards(query) {
