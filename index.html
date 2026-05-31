@@ -167,7 +167,11 @@ a:hover { color: var(--rausch-hover); text-decoration: underline; }
   width: 44px; height: 44px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 18px; font-weight: 700; color: #fff;
-  flex-shrink: 0; letter-spacing: -0.5px;
+  flex-shrink: 0; letter-spacing: -0.5px; overflow: hidden;
+  background: var(--surface-soft);
+}
+.company-avatar img {
+  width: 44px; height: 44px; object-fit: contain; border-radius: 50%;
 }
 
 /* Request button */
@@ -349,6 +353,26 @@ const AVATAR_COLORS = [
   '#e8472a','#e07c39','#d4a017','#4caf7d','#2196a8',
   '#3b7dd8','#7b52b9','#c2185b','#00897b','#546e7a'
 ];
+const COMPANY_DOMAIN = {
+  '삼성전자':     'samsung.com',
+  'SK하이닉스':   'skhynix.com',
+  'KB금융':       'kbfg.com',
+  'LS일렉트릭':   'ls-electric.com',
+  'HD현대중공업': 'hshi.co.kr',
+  '한화오션':     'hanwhaocean.com',
+  '한미반도체':   'hanmisemiconductor.com',
+  '유한양행':     'yuhan.co.kr',
+  '효성중공업':   'hyosunghheavy.com',
+  '펩트론':       'peptron.com',
+  '한화에어로스페이스': 'hanwhaaerospace.com',
+  'LG에너지솔루션': 'lgensol.com',
+  'POSCO홀딩스':  'posco.co.kr',
+  '현대차':       'hyundai.com',
+  '기아':         'kia.com',
+  'NAVER':        'navercorp.com',
+  '카카오':       'kakao.com',
+};
+
 function avatarColor(name) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
@@ -356,6 +380,19 @@ function avatarColor(name) {
 }
 function avatarChar(name) {
   return name.replace(/^(주식회사|㈜)\s*/,'')[0] || '?';
+}
+function avatarHTML(name) {
+  const domain = COMPANY_DOMAIN[name];
+  if (domain) {
+    const bg = avatarColor(name);
+    const ch = avatarChar(name);
+    return `<div class="company-avatar" style="background:${bg}" data-name="${name}">
+      <img src="https://logo.clearbit.com/${domain}?size=88"
+           onerror="this.parentElement.innerHTML='${ch}';this.parentElement.style.background='${bg}'"
+           alt="${name}">
+    </div>`;
+  }
+  return `<div class="company-avatar" style="background:${avatarColor(name)}">${avatarChar(name)}</div>`;
 }
 
 function renderCompanyCards(query) {
@@ -371,7 +408,7 @@ function renderCompanyCards(query) {
   list.innerHTML = filtered.map(d => `
     <div class="report-card" onclick="navigate('${d.name}')">
       <div class="company-card-inner">
-        <div class="company-avatar" style="background:${avatarColor(d.name)}">${avatarChar(d.name)}</div>
+        ${avatarHTML(d.name)}
         <div class="company-title" style="flex:1">
           <span>${d.name}</span><span class="chevron">›</span>
         </div>
