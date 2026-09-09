@@ -25,7 +25,11 @@ def connect_db() -> sqlite3.Connection | None:
     if not DB_PATH.exists():
         print(f"[경고] DB 파일을 찾을 수 없습니다: {DB_PATH}")
         return None
-    return sqlite3.connect(DB_PATH)
+    try:
+        return sqlite3.connect(DB_PATH)
+    except sqlite3.Error as err:
+        print(f"[오류] DB 연결 실패: {type(err).__name__}")
+        return None
 
 
 def fetch_holdings(conn: sqlite3.Connection) -> list[dict]:
@@ -142,6 +146,9 @@ def main() -> int:
     try:
         holdings = fetch_holdings(conn)
         budget = fetch_budget(conn)
+    except sqlite3.Error as err:
+        print(f"[오류] DB 조회 실패: {type(err).__name__}")
+        return 1
     finally:
         conn.close()
 
